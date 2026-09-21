@@ -73,7 +73,7 @@ def split_data(
     pd.Series
 ]:
 
-    X = df.drop(columns=['Class', 'TransactionNumber'])
+    X = df.drop(columns=['Class', 'TransactionNumber'], errors='ignore')
     y = df['Class']
 
     X_train, X_test, y_train, y_test = train_test_split(
