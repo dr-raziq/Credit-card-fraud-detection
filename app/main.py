@@ -4,10 +4,11 @@ import joblib
 import os
 
 MODEL_PATH = os.path.join("results", "models", "xgboost_model.pkl")
+DATA_PATH = os.path.join("data", "creditcard_clean.csv")
 
 st.set_page_config(page_title="Credit Card Fraud Detector", layout="centered")
 st.title("Credit Card Fraud Detection")
-st.write("Enter the transaction features to get a fraud prediction.")
+st.write("Enter a transaction number to check whether it is fraudulent.")
 
 @st.cache_resource
 def load_model():
@@ -16,38 +17,45 @@ def load_model():
         st.stop()
     return joblib.load(MODEL_PATH)
 
+@st.cache_data
+def load_data():
+    if not os.path.exists(DATA_PATH):
+        st.error("Cleaned dataset not found. Run make_dataset.py first.")
+        st.stop()
+    return pd.read_csv(DATA_PATH)
+
 model = load_model()
+df = load_data()
 
-st.subheader("Transaction Details")
-col1, col2, col3 = st.columns(3)
+max_txn = int(df['TransactionNumber'].max())
 
-with col1:
-    time = st.number_input("Time (seconds since first transaction)", min_value=0.0, value=0.0)
-with col2:
-    amount = st.number_input("Amount", min_value=0.0, value=0.0)
-with col3:
-    st.write("")  
-
-st.write("Principal Components (V1-V28)")
-v_cols = st.columns(4)
-v_values = {}
-for i in range(1, 29):
-    col_idx = (i-1) % 4
-    with v_cols[col_idx]:
-        v_values[f'V{i}'] = st.number_input(f"V{i}", value=0.0, format="%.4f")
+txn_no = st.number_input(
+    "Transaction Number",
+    min_value=1,
+    max_value=max_txn,
+    value=1,
+    step=1
+)
 
 if st.button("Predict Fraud Probability", type="primary"):
-    input_dict = {'Time': time, 'Amount': amount}
-    for i in range(1, 29):
-        input_dict[f'V{i}'] = v_values[f'V{i}']
-    input_df = pd.DataFrame([input_dict])
+    row = df[df['TransactionNumber'] == txn_no]
 
-    feature_order = ['Time'] + [f'V{i}' for i in range(1,29)] + ['Amount']
-    input_df = input_df[feature_order]
-
-    proba = model.predict_proba(input_df)[0][1]
-    st.write(f"### Fraud Probability: **{proba:.4f}**")
-    if proba > 0.5:
-        st.error("This transaction is likely fraudulent!")
+    if row.empty:
+        st.error("Transaction number not found in dataset.")
     else:
-        st.success("This transaction seems legitimate.")
+        X = row.drop(columns=['TransactionNumber', 'Class'])
+
+        feature_order = ['Time'] + [f'V{i}' for i in range(1, 29)] + ['Amount']
+        X = X[feature_order]
+
+        proba = model.predict_proba(X)[0][1]
+        actual = int(row['Class'].values[0])
+
+        st.write(f"### Fraud Probability: **{proba:.4f}**")
+
+        if proba > 0.5:
+            st.error("This transaction is likely fraudulent!")
+        else:
+            st.success("This transaction seems legitimate.")
+
+        st.caption(f"Actual label in dataset: {'Fraud' if actual == 1 else 'Legitimate'}")
