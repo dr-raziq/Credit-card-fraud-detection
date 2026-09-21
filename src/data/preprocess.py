@@ -1,7 +1,6 @@
 import pandas as pd
 
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
 
 from typing import Tuple
@@ -12,23 +11,25 @@ def scale_features(
     feature_names: list = None
 ) -> pd.DataFrame:
     """
-    Scale numerical features using StandardScaler.
+    Standardize selected numerical features.
 
-    Parameters:
-        X: Input feature DataFrame.
-        feature_names: Features to scale. Defaults to Time and Amount.
-
-    Returns:
-        DataFrame with selected features standardized.
+    The scaling uses sample standard deviation (ddof=1)
+    so that pandas .std() returns approximately 1.
     """
 
     if feature_names is None:
         feature_names = ['Time', 'Amount']
 
-    scaler = StandardScaler()
-
     X = X.copy()
-    X[feature_names] = scaler.fit_transform(X[feature_names])
+
+    for feature in feature_names:
+        mean = X[feature].mean()
+        std = X[feature].std()
+
+        if std == 0:
+            X[feature] = 0.0
+        else:
+            X[feature] = (X[feature] - mean) / std
 
     return X
 
@@ -39,18 +40,9 @@ def apply_smote(
     random_state: int = 42
 ) -> Tuple[pd.DataFrame, pd.Series]:
     """
-    Balance classes using SMOTE.
+    Balance the dataset using SMOTE.
 
-    The number of nearest neighbors is automatically adjusted
-    for small datasets.
-
-    Parameters:
-        X: Feature DataFrame.
-        y: Target Series.
-        random_state: Random seed for reproducibility.
-
-    Returns:
-        Resampled X and y.
+    Automatically adjusts k_neighbors for small datasets.
     """
 
     minority_count = y.value_counts().min()
@@ -60,8 +52,7 @@ def apply_smote(
             "SMOTE requires at least 2 samples in the minority class."
         )
 
-    # SMOTE requires k_neighbors + 1 minority samples.
-    # Default is 5, but reduce it for very small datasets.
+    # SMOTE requires at least k_neighbors + 1 minority samples.
     k_neighbors = min(5, minority_count - 1)
 
     smote = SMOTE(
@@ -96,14 +87,6 @@ def split_data(
 ]:
     """
     Split the dataset into training and testing sets.
-
-    Parameters:
-        df: Input DataFrame containing the Class column.
-        test_size: Proportion of data used for testing.
-        random_state: Random seed for reproducibility.
-
-    Returns:
-        X_train, X_test, y_train, y_test.
     """
 
     X = df.drop('Class', axis=1)
