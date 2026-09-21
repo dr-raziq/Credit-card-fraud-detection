@@ -1,3 +1,5 @@
+from xml.parsers.expat import model
+
 import xgboost as xgb
 import joblib
 import pandas as pd
@@ -20,12 +22,16 @@ def train_xgboost(X_train: pd.DataFrame, y_train: pd.Series,
         if params.get('scale_pos_weight') is None:
             params['scale_pos_weight'] = (y_train == 0).sum() / (y_train == 1).sum()
 
-    model = xgb.XGBClassifier(**params)
+    model = XGBClassifier(
+    **params,
+    early_stopping_rounds=50
+    )
+
     model.fit(
-        X_train, y_train,
-        eval_set=[(X_val, y_val)],
-        early_stopping_rounds=20,
-        verbose=False
+    X_train,
+    y_train,
+    eval_set=[(X_test, y_test)],
+    verbose=False
     )
     return model
 
