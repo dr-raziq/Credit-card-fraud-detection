@@ -5,9 +5,14 @@ import joblib
 import pandas as pd
 from typing import Dict, Any
 
-def train_xgboost(X_train: pd.DataFrame, y_train: pd.Series,
-                  X_val: pd.DataFrame, y_val: pd.Series,
-                  params: Dict[str, Any] = None) -> xgb.XGBClassifier:
+def train_xgboost(
+    X_train: pd.DataFrame,
+    y_train: pd.Series,
+    X_val: pd.DataFrame,
+    y_val: pd.Series,
+    params: Dict[str, Any] = None
+) -> xgb.XGBClassifier:
+
     if params is None:
         params = {
             'objective': 'binary:logistic',
@@ -20,20 +25,24 @@ def train_xgboost(X_train: pd.DataFrame, y_train: pd.Series,
         }
     else:
         if params.get('scale_pos_weight') is None:
-            params['scale_pos_weight'] = (y_train == 0).sum() / (y_train == 1).sum()
+            params['scale_pos_weight'] = (
+                (y_train == 0).sum() / (y_train == 1).sum()
+            )
 
-    model = XGBClassifier(
-    **params,
-    early_stopping_rounds=50
+    model = xgb.XGBClassifier(
+        **params,
+        early_stopping_rounds=50
     )
 
     model.fit(
-    X_train,
-    y_train,
-    eval_set=[(X_test, y_test)],
-    verbose=False
+        X_train,
+        y_train,
+        eval_set=[(X_val, y_val)],
+        verbose=False
     )
+
     return model
+
 
 def save_model(model, path: str) -> None:
     joblib.dump(model, path)
