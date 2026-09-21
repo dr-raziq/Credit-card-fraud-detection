@@ -10,12 +10,6 @@ def scale_features(
     X: pd.DataFrame,
     feature_names: list = None
 ) -> pd.DataFrame:
-    """
-    Standardize selected numerical features.
-
-    The scaling uses sample standard deviation (ddof=1)
-    so that pandas .std() returns approximately 1.
-    """
 
     if feature_names is None:
         feature_names = ['Time', 'Amount']
@@ -39,20 +33,13 @@ def apply_smote(
     y: pd.Series,
     random_state: int = 42
 ) -> Tuple[pd.DataFrame, pd.Series]:
-    """
-    Balance the dataset using SMOTE.
-
-    Automatically adjusts k_neighbors for small datasets.
-    """
 
     minority_count = y.value_counts().min()
 
     if minority_count < 2:
         raise ValueError(
-            "SMOTE requires at least 2 samples in the minority class."
         )
 
-    # SMOTE requires at least k_neighbors + 1 minority samples.
     k_neighbors = min(5, minority_count - 1)
 
     smote = SMOTE(
@@ -85,11 +72,8 @@ def split_data(
     pd.Series,
     pd.Series
 ]:
-    """
-    Split the dataset into training and testing sets.
-    """
 
-    X = df.drop('Class', axis=1)
+    X = df.drop(columns=['Class', 'TransactionNumber'])
     y = df['Class']
 
     X_train, X_test, y_train, y_test = train_test_split(
