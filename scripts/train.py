@@ -3,8 +3,17 @@ import yaml
 import pandas as pd
 import joblib
 import os
+import sys
+
+PROJECT_ROOT = os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))
+)
+
+sys.path.insert(0, PROJECT_ROOT)
 
 from src.data.clean_data import clean_data
+from src.data.preprocess import split_data, scale_features, apply_smote
+from src.models.train_model import train_xgboost, save_model
 
 
 def load_or_create_cleaned_data(config):
