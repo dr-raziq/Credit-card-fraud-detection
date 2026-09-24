@@ -1,6 +1,10 @@
 CREDIT CARD FRAUD DETECTION
+
+Author: Mohammad Raziq Mohammad Arshad Shaikh
+
 A Machine Learning-Based Fraud Detection System
 Final Year B.Sc. Computer Science Project - A+ Grade
+
 Ashoka Center for Business and Computer Studies
 Affiliated with Savitribai Phule Pune University (SPPU)
 2025
